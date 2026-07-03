@@ -256,11 +256,12 @@ cd api/worker && celery -A worker_app.celery_app worker --loglevel=INFO
 
 **Production:** [https://creator-os-gold.vercel.app](https://creator-os-gold.vercel.app)
 
-Vercel is connected to GitHub — pushes to `main` deploy automatically. [`vercel.json`](vercel.json) runs **web + API** from the repo root (same-origin `/api/v1`).
+Vercel is connected to GitHub. **Push to `main`** → [CI](.github/workflows/ci.yml) runs tests → **Deploy to Vercel** job ships web + API ([`vercel.json`](vercel.json), same-origin `/api/v1`).
 
 ```bash
-./scripts/sync-github-env.sh --repo KOfferman/CreatorOS   # CI secrets/vars
-python3 scripts/push-vercel-env.py                        # Vercel env (api/.env.vercel)
+# One-time: api/.env.vercel (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID)
+./scripts/sync-github-env.sh --repo KOfferman/CreatorOS   # CI + deploy secrets
+python3 scripts/push-vercel-env.py                        # Vercel runtime env
 ```
 
 Full guide: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)

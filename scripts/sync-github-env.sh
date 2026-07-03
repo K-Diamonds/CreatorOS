@@ -95,10 +95,16 @@ for canonical, source in aliases.items():
     if source in env and canonical not in env:
         env[canonical] = env[source]
 
+vercel_creds = parse_env_file(root / "api/.env.vercel")
+for key in manifest.get("deploySecrets", []):
+    if key in vercel_creds and vercel_creds[key]:
+        env[key] = vercel_creds[key]
+
 local_only = set(manifest.get("localOnly", []))
 deploy_env = {k: v for k, v in env.items() if k not in local_only and v}
 
 secret_keys = set(manifest.get("secrets", [])) & set(deploy_env)
+secret_keys |= set(manifest.get("deploySecrets", [])) & set(deploy_env)
 variable_keys = set(manifest.get("variables", [])) & set(deploy_env)
 
 

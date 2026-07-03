@@ -20,23 +20,26 @@ The browser calls the API on the **same domain** at `/api/v1/...` — no CORS se
 1. In [Vercel](https://vercel.com) → **Add New Project** → import `KOfferman/CreatorOS`
 2. Set **Root Directory** to the **repository root** (not `web/`)
 3. Vercel reads [`vercel.json`](../vercel.json) for web + API services
-4. Enable **Production Branch**: `main` — deploys automatically on every push
+4. Set **Production Branch** to `main`
 
-No `VERCEL_TOKEN` or separate GitHub deploy workflow is required.
+[`vercel.json`](../vercel.json) sets `"git.deploymentEnabled": false` so production deploys run from **GitHub Actions** after CI passes (not in parallel with failing builds).
 
-### 2. GitHub Actions (CI only)
+### 2. GitHub Actions (CI + deploy)
 
-**Sync `.env.local` → GitHub** for CI tests:
+**Sync local env → GitHub** (CI tests + Vercel deploy credentials):
 
 ```bash
 gh auth login
+# api/.env.vercel: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
 ./scripts/sync-github-env.sh --repo KOfferman/CreatorOS
 ```
 
 | Type | Used by |
 |---|---|
-| **GitHub Secrets** | CI workflow (`DATABASE_URL`, `AUTH_SECRET`, OAuth secrets, …) |
-| **GitHub Variables** | CI workflow (`ENVIRONMENT`, `NEXT_PUBLIC_*`, …) |
+| **GitHub Secrets** | CI + deploy (`AUTH_SECRET`, `DATABASE_URL`, `VERCEL_TOKEN`, …) |
+| **GitHub Variables** | CI (`ENVIRONMENT`, `NEXT_PUBLIC_*`, …) |
+
+**Deploy flow:** push to `main` → API + web tests → `deploy-vercel` job (`vercel build` + `vercel deploy --prebuilt --prod`) → smoke test `/api/v1/health`.
 
 Manifest: [`.github/env.manifest.json`](../.github/env.manifest.json)
 
@@ -76,7 +79,7 @@ vercel --prod
 
 ### Notes
 
-- **Deploy flow**: push to `main` → Vercel Git integration builds & deploys; [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs tests in parallel
+- **Deploy flow**: push to `main` → [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) tests → deploy job → Vercel production
 - **Coach / LLM**: Vercel functions max **60s** (Pro). Use `mock` or cloud LLM — no Ollama on Vercel
 - **Celery worker**: not on Vercel — run separately with `api/Dockerfile` + Redis
 - **Database**: run migrations before first deploy: `cd shared/database && alembic upgrade head`
