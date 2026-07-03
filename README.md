@@ -123,8 +123,9 @@ Domain agents in `shared/agents/` — each with typed input/output, prompt templ
 
 | Provider | Where | Notes |
 |---|---|---|
-| **Mock** | Vercel (production) | Deterministic coach responses — `LLM_PROVIDER=mock`, no API key |
-| **Hermes (Ollama)** | Local dev | Real LLM via `LLM_PROVIDER=hermes` and `cd api && make dev` |
+| **Hermes (Ollama)** | Local dev | `LLM_PROVIDER=hermes` + `cd api && make dev` |
+| **Hermes (OpenRouter)** | Vercel | Set `OPENROUTER_API_KEY` on Vercel — routes Hermes to cloud automatically |
+| **Mock** | Vercel fallback | Used when no OpenRouter key; responses vary by question topic |
 
 Switching providers is an env change, not a refactor.
 
@@ -212,4 +213,4 @@ CreatorOS/
 
 ## Status
 
-Live at [creator-os-gold.vercel.app](https://creator-os-gold.vercel.app). The hosted demo uses **mock AI** for coach and content flows. Typed agents, MySQL persistence, and Vercel Services deployment are in place; see [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) for what's next.
+Live at [creator-os-gold.vercel.app](https://creator-os-gold.vercel.app). Coach uses **cloud Hermes via OpenRouter** when `OPENROUTER_API_KEY` is set on Vercel; otherwise demo mock responses. Local dev uses Ollama (`make dev`).

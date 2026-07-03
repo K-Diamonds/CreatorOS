@@ -68,6 +68,7 @@ export function CoachScreen() {
   const [messages, setMessages] = useState<Message[]>(() => loadCoachHistory());
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [llmLabel, setLlmLabel] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -89,6 +90,15 @@ export function CoachScreen() {
     setLoading(true);
     try {
       const response = await askCoach({ user_id: getActiveUserId(), question: text });
+      if (response.llm_provider) {
+        const label =
+          response.llm_provider === "mock"
+            ? "Demo mode (mock responses)"
+            : response.llm_provider === "openrouter"
+              ? `Hermes via OpenRouter · ${response.llm_model ?? "cloud"}`
+              : `${response.llm_provider} · ${response.llm_model ?? "model"}`;
+        setLlmLabel(label);
+      }
       const body = [
         response.direct_coaching_response,
         response.recommended_next_actions.length
@@ -125,7 +135,9 @@ export function CoachScreen() {
       <div className="mb-5 flex flex-shrink-0 items-start justify-between gap-4">
         <div>
           <h1 className="mb-1 text-[1.65rem] font-extrabold text-white">Growth Coach</h1>
-          <p className="text-sm text-[#717182]">Your AI-powered strategy advisor · Available 24/7</p>
+          <p className="text-sm text-[#717182]">
+            {llmLabel ?? "Your AI-powered strategy advisor · Available 24/7"}
+          </p>
         </div>
         <button
           type="button"
@@ -177,7 +189,9 @@ export function CoachScreen() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-[#717182]">
-                Hermes is thinking — the first reply can take up to 60 seconds.
+                {llmLabel?.includes("mock")
+                  ? "Generating a demo response…"
+                  : "Coach is thinking — first reply can take up to 60 seconds."}
               </p>
             </div>
           </div>

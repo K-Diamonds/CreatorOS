@@ -31,3 +31,5 @@ class CoachChatResponse(BaseModel):
     content_ideas: list[str] = Field(default_factory=list)
     risk_warning: str | None = None
     agent_run_id: str | None = None
+    llm_provider: str | None = None
+    llm_model: str | None = None

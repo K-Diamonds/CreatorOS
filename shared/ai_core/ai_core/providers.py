@@ -386,6 +386,57 @@ class MockLLMProvider(BaseLLMProvider):
             ],
             "risk_warning": None,
         },
+        "caption": {
+            "direct_coaching_response": (
+                "Strong captions for your audience: open with a one-line hook, add 2–3 value bullets, "
+                "end with a single CTA (save, comment, or share). Keep the first 125 characters punchy."
+            ),
+            "recommended_next_actions": [
+                "Rewrite your last caption with hook + bullets + CTA",
+                "A/B test a question CTA vs save CTA",
+                "Add 3 niche hashtags after a line break",
+            ],
+            "content_ideas": [
+                "Caption formula that doubled my saves",
+                "Hook + story + CTA breakdown",
+                "5 CTAs that drive comments",
+            ],
+            "risk_warning": None,
+        },
+        "shortform": {
+            "direct_coaching_response": (
+                "For Reels/TikTok: hook in 0–2s, one clear payoff by second 8, loop-friendly ending. "
+                "Your audience skews educational — teach one micro-lesson per short."
+            ),
+            "recommended_next_actions": [
+                "Script next Reel with a 2-second pattern interrupt",
+                "Add on-screen text for silent viewers",
+                "Post short-form on your top window (Sat 9am)",
+            ],
+            "content_ideas": [
+                "60-second tutorial with a bold opener",
+                "Myth vs fact short",
+                "POV: what I wish I knew sooner",
+            ],
+            "risk_warning": None,
+        },
+        "engagement": {
+            "direct_coaching_response": (
+                "Engagement compounds when you reply in the first hour. Batch 10 minutes after each post "
+                "to answer comments and ask follow-up questions — that signals quality to the algorithm."
+            ),
+            "recommended_next_actions": [
+                "Reply to every comment in the first 60 minutes today",
+                "Pin a discussion-starting comment on your latest post",
+                "Run a Story Q&A box this week",
+            ],
+            "content_ideas": [
+                "Replying to your most asked question",
+                "Community poll: what should I cover next?",
+                "Behind the replies — how I engage",
+            ],
+            "risk_warning": None,
+        },
         "default": {
             "direct_coaching_response": (
                 "Based on your analytics, focus on consistency over virality. Your audience responds best "
@@ -411,18 +462,44 @@ class MockLLMProvider(BaseLLMProvider):
     @classmethod
     def _coach_payload_for_prompt(cls, prompt: str) -> dict[str, Any]:
         match = re.search(r"User question:\s*(.+?)(?:\n\n|$)", prompt, re.DOTALL | re.IGNORECASE)
-        question = (match.group(1) if match else prompt).lower()
-        if "drop" in question or "reach" in question:
+        raw_question = (match.group(1) if match else prompt).strip()
+        question = raw_question.lower()
+        if "drop" in question or "reach" in question or "views" in question:
             key = "reach"
-        elif "time" in question or "when" in question:
+        elif "time" in question or "when" in question or "schedule" in question:
             key = "time"
-        elif "hook" in question:
+        elif "hook" in question or "opening" in question:
             key = "hook"
-        elif "pillar" in question or "niche" in question:
+        elif "pillar" in question or "niche" in question or "strategy" in question:
             key = "pillar"
+        elif "hashtag" in question or "caption" in question:
+            key = "caption"
+        elif "reel" in question or "short" in question or "tiktok" in question:
+            key = "shortform"
+        elif "engage" in question or "comment" in question or "community" in question:
+            key = "engagement"
         else:
             key = "default"
-        return dict(cls._COACH_REPLIES[key])
+
+        payload = dict(cls._COACH_REPLIES.get(key, cls._COACH_REPLIES["default"]))
+        if key == "default":
+            snippet = raw_question[:100] + ("…" if len(raw_question) > 100 else "")
+            variant = sum(ord(c) for c in question) % 3
+            angles = (
+                "lead with a specific outcome in the first line",
+                "anchor the post in a personal story your audience recognizes",
+                "turn the topic into a quick listicle with one actionable takeaway",
+            )
+            payload["direct_coaching_response"] = (
+                f'On "{snippet}" — {angles[variant]}. Your engagement rate (6.3%) is strong; '
+                "ship one post this week that answers this directly, then repurpose it as a Story poll."
+            )
+            payload["content_ideas"] = [
+                f"{raw_question[:40]} — my honest take",
+                f"3 mistakes creators make about {raw_question[:30]}",
+                f"What I'd do differently: {raw_question[:35]}",
+            ]
+        return payload
 
     def generate_text(
         self,

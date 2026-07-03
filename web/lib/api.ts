@@ -86,6 +86,8 @@ export type CoachResponse = {
   content_ideas: string[];
   risk_warning: string | null;
   agent_run_id: string | null;
+  llm_provider?: string | null;
+  llm_model?: string | null;
 };
 
 export type PlatformConnection = {

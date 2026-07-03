@@ -77,4 +77,6 @@ class CoachService:
             content_ideas=execution.output.content_ideas,
             risk_warning=execution.output.risk_warning,
             agent_run_id=execution.meta.agent_run_id,
+            llm_provider=execution.meta.provider_name,
+            llm_model=execution.meta.model_name,
         )
