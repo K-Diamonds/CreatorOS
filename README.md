@@ -151,7 +151,7 @@ Domain agents in `shared/agents/` — each with typed input/output, prompt templ
 
 ## Quick commands
 
-Requires **Python 3.11+** (CI uses 3.12) and **Node 20+** with pnpm.
+Requires **Python 3.11+** (CI uses 3.12) and **Node 22+** with pnpm.
 
 ```bash
 make install  # venv + deps + copy .env.example → .env.local (first run)

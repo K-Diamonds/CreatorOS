@@ -55,6 +55,7 @@ GitHub secrets are **not** automatically available to Vercel. Set the same value
 | `AUTH_SECRET` | same as GitHub secret |
 | `AUTH_URL` | `https://your-app.vercel.app` |
 | `DATABASE_URL` | your remote MySQL URL |
+| `REDIS_URL` | Upstash `rediss://...` (required for rate limiting in production) |
 | `CELERY_BROKER_URL` | Redis URL (Upstash, etc.) |
 | `CELERY_RESULT_BACKEND` | Redis URL |
 | `LLM_PROVIDER` | `mock` or `openai` — **not** `hermes` |
