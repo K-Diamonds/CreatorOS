@@ -11,11 +11,13 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[2]
 API_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "shared" / "database"))
+sys.path.insert(0, str(API_DIR))
 
 import os
 
 os.chdir(API_DIR)
 
+from app.core.passwords import hash_password
 from database import (
     AgentRun,
     AudienceInsight,
@@ -550,6 +552,7 @@ def seed_data(*, reset: bool = True, creator_score: int = 371) -> None:
             id=SEED_USER_ID,
             email=cfg.email,
             full_name=cfg.full_name,
+            password_hash=hash_password("demo1234"),
             is_active=True,
         )
         session.add(user)

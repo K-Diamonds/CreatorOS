@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.auth.constants import AUTH_COOKIE_NAME
 from app.core.security import AuthError, verify_access_token
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -16,18 +17,31 @@ class AuthenticatedUser:
     email: str | None
 
 
+def _resolve_token(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None,
+) -> str | None:
+    if credentials is not None and credentials.scheme.lower() == "bearer":
+        return credentials.credentials
+    cookie_token = request.cookies.get(AUTH_COOKIE_NAME)
+    if cookie_token:
+        return cookie_token
+    return None
+
+
 def require_authenticated_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> AuthenticatedUser:
-    if credentials is None or credentials.scheme.lower() != "bearer":
+    token = _resolve_token(request, credentials)
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing bearer token.",
         )
 
     try:
-        payload = verify_access_token(credentials.credentials)
+        payload = verify_access_token(token)
     except AuthError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 

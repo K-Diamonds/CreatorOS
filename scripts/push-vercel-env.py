@@ -19,6 +19,7 @@ PRODUCTION_DEFAULTS = {
     "ENVIRONMENT": "production",
     "LOG_LEVEL": "INFO",
     "AUTH_ENABLED": "true",
+    "DEMO_AUTH_ENABLED": "false",
     "LLM_PROVIDER": "hermes",
     "NEXT_PUBLIC_API_BASE_URL": "/api/v1",
 }

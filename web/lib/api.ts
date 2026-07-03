@@ -148,6 +148,7 @@ async function request<T>(
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
       signal: controller?.signal,
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...getAuthHeaders(),

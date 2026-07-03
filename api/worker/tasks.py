@@ -231,7 +231,14 @@ def run_daily_trend_research(
     }
     agent_run_id = _create_agent_run(user_id=user_id, agent_name="run_daily_trend_research", input_payload=input_payload)
     try:
-        agent = TrendResearchAgent(llm_provider=_get_provider(settings))
+        from app.services.trend_source_factory import build_trend_data_source
+        from app.core.config import get_settings
+
+        app_settings = get_settings()
+        agent = TrendResearchAgent(
+            llm_provider=_get_provider(settings),
+            data_source=build_trend_data_source(app_settings),
+        )
         execution = agent.run(user_id=user_id, payload=TrendResearchInput(**input_payload))
         output_payload = {
             "result": execution.output.model_dump(mode="json"),

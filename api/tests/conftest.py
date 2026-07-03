@@ -20,12 +20,13 @@ sys.path.insert(0, str(ROOT / "shared" / "agents"))
 sys.path.insert(0, str(ROOT / "shared" / "ai_core"))
 sys.path.insert(0, str(ROOT / "shared" / "database"))
 
-# Required settings for app startup.
-os.environ.setdefault("ENVIRONMENT", "test")
+# Required settings for app startup (force test env over .env.local).
+os.environ["ENVIRONMENT"] = "test"
 os.environ.setdefault("LOG_LEVEL", "INFO")
 os.environ.setdefault("AUTH_SECRET", "test-secret-value-that-is-long-enough-123")
 os.environ.setdefault("AUTH_URL", "http://localhost:3000")
 os.environ.setdefault("AUTH_ENABLED", "false")
+os.environ.setdefault("DEMO_AUTH_ENABLED", "true")
 os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
 os.environ.setdefault("CELERY_BROKER_URL", "redis://localhost:6379/0")
 os.environ.setdefault("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")

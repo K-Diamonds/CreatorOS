@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     auth_secret: str
     auth_url: str
     auth_enabled: bool = True
+    demo_auth_enabled: bool = Field(default=False, validation_alias=AliasChoices("DEMO_AUTH_ENABLED"))
+    allow_mock_llm_in_production: bool = Field(
+        default=False, validation_alias=AliasChoices("ALLOW_MOCK_LLM_IN_PRODUCTION")
+    )
     auth_jwt_algorithm: str = "HS256"
     auth_access_token_exp_minutes: int = 60
 
@@ -32,6 +36,12 @@ class Settings(BaseSettings):
     ollama_model: str = "hermes3"
     openrouter_api_key: str = ""
     openrouter_model: str = "nousresearch/hermes-3-llama-3.1-70b"
+
+    trend_data_source: str = "rss"
+    trend_rss_feed_urls: Annotated[list[str], NoDecode] = [
+        "https://www.reddit.com/r/InstagramMarketing/.rss",
+        "https://www.reddit.com/r/ContentCreation/.rss",
+    ]
 
     def resolved_llm_model(self) -> str:
         if self.llm_model.strip():
@@ -91,8 +101,28 @@ class Settings(BaseSettings):
 
     @field_validator("auth_enabled", mode="before")
     @classmethod
-    def enforce_auth_enabled(cls, value: object) -> bool:
+    def parse_auth_enabled(cls, value: object) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
         return True
+
+    @field_validator("demo_auth_enabled", "allow_mock_llm_in_production", mode="before")
+    @classmethod
+    def parse_bool_flag(cls, value: object) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
+        return False
+
+    @field_validator("trend_rss_feed_urls", mode="before")
+    @classmethod
+    def split_trend_feeds(cls, value: str | list[str]) -> list[str]:
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
 
     @model_validator(mode="after")
     def validate_security_settings(self):

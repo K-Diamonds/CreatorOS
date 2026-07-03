@@ -8,9 +8,15 @@ class AuthTokenRequest(BaseModel):
     password: str = Field(min_length=8, max_length=128)
 
 
+class AuthRegisterRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+    full_name: str | None = Field(default=None, max_length=255)
+
+
 class AuthTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in_seconds: int
     user_id: str
-    auth_mode: Literal["demo"] = "demo"
+    auth_mode: Literal["demo", "password"] = "password"

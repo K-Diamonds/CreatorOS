@@ -49,7 +49,7 @@ class MockOutput:
 
 
 class MockAgent:
-    def __init__(self, llm_provider):  # noqa: ANN001, ARG002
+    def __init__(self, llm_provider, data_source=None, **kwargs):  # noqa: ANN001, ARG002
         pass
 
     def run(self, user_id: str, payload):  # noqa: ANN001, ARG002

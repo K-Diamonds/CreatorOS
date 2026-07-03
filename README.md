@@ -20,7 +20,7 @@ Demo login: `daniela@creatoros.demo` / `demo1234`
 | **Async by default** | Long-running AI jobs offloaded to Celery; API stays responsive |
 | **Operational readiness** | Structured JSON logs, request IDs, rate limiting, admin status endpoint |
 | **Data discipline** | SQLAlchemy models, Alembic migrations, `agent_runs` audit trail for every AI execution |
-| **Security thinking** | Prompt-injection guardrails, task allowlisting, JWT demo auth (explicitly labeled) |
+| **Security thinking** | Bcrypt password auth, isolated demo auth module, production guardrails, HttpOnly JWT cookies |
 | **Cost awareness** | Token usage captured per agent run; mock provider for zero-cost production demo |
 
 ---
@@ -30,7 +30,7 @@ Demo login: `daniela@creatoros.demo` / `demo1234`
 | Feature | Description |
 |---|---|
 | **Daily briefing** | Synthesizes trends, calendar, and audience context into today's action plan |
-| **Trend discovery** | Platform-filtered topics with confidence scoring and generate-from-trend flow |
+| **Trend discovery** | RSS-fed research (Reddit) + LLM ranking; seeded dashboard trends for demo UX |
 | **Content generator** | Structured outputs: hook, caption, script, hashtags, CTA |
 | **Growth coach** | Chat-based coaching with markdown rendering and persisted history |
 | **Content calendar** | Monthly/list views and status badges |
@@ -117,17 +117,42 @@ Domain agents in `shared/agents/` — each with typed input/output, prompt templ
 
 ---
 
-## LLM Providers
+## Architecture Decisions
 
-`shared/ai_core/` defines a stable contract: `generate_text`, `generate_json`, `stream_text`.
-
-| Provider | Where | Notes |
+| Decision | Choice | Tradeoff |
 |---|---|---|
-| **Hermes (Ollama)** | Local dev | `LLM_PROVIDER=hermes` + `cd api && make dev` |
-| **Hermes (OpenRouter)** | Vercel | Set `OPENROUTER_API_KEY` on Vercel — routes Hermes to cloud automatically |
-| **Mock** | Vercel fallback | Used when no OpenRouter key; responses vary by question topic |
+| **Monorepo** | `web/` + `api/` + `shared/` | Shared agents/DB without publishing packages; larger repo |
+| **Database** | MySQL (Hostinger / Docker) | Simple managed hosting; pgvector migration documented for later |
+| **Auth** | Bcrypt + JWT (`auth_mode: password`) | Production uses hashed passwords; `DEMO_AUTH_ENABLED=true` only for local dev |
+| **Session transport** | HttpOnly cookie + Bearer fallback | Same-origin Vercel uses secure cookies; local cross-port keeps Bearer in storage |
+| **LLM on Vercel** | OpenRouter Hermes when keyed | Ollama cannot run serverless; mock blocked in production unless explicitly allowed |
+| **Trend signals** | RSS (`TREND_DATA_SOURCE=rss`) | Real public feeds without paid APIs; mock still available for offline dev |
+| **CI** | `CI_LITE=true` for tests | Reviewers run `make test` without private GitHub secrets; deploy job validates secrets |
+| **Async AI** | Celery + Redis | API stays fast; workers need separate Redis in production (Upstash) |
 
-Switching providers is an env change, not a refactor.
+---
+
+## Quick commands
+
+```bash
+make dev      # API + Ollama (api/Makefile)
+make test     # pytest + vitest
+make seed     # demo data (daniela@creatoros.demo / demo1234)
+make migrate  # Alembic upgrade
+```
+
+---
+
+## LLM Providers (production readiness)
+
+| Provider | Status | Use |
+|---|---|---|
+| **Hermes via OpenRouter** | Production-ready | Vercel — set `OPENROUTER_API_KEY` |
+| **Hermes via Ollama** | Production-ready (self-hosted) | Local — `LLM_PROVIDER=hermes` + `make dev` |
+| **Mock** | Dev / explicit fallback | `LLM_PROVIDER=mock` or no OpenRouter key on Vercel |
+| **OpenAI** | Implemented | `LLM_PROVIDER=openai` + `OPENAI_API_KEY` |
+| **OpenRouter (other models)** | Implemented | Change `OPENROUTER_MODEL` |
+| **Claude / Gemini** | Not wired | Extension points only |
 
 ---
 
@@ -166,18 +191,32 @@ CreatorOS/
 
 ## Tests
 
+```bash
+make test
+```
+
 | Suite | Command |
 |---|---|
+| **All** | `make test` |
 | **Backend** | `cd api && python -m pytest tests -q` |
 | **Frontend** | `cd web && pnpm test` |
+| **E2E flow** | `pytest tests/test_e2e_creator_flow.py` (profile → trends → content → calendar → coach) |
 
 ---
 
 ## Authentication
 
-> **Demo auth only** — not production-ready.
+Production uses **bcrypt password hashing** (`auth_mode: password`). Demo auto-provision is isolated in `api/app/auth/demo_auth.py` and only allowed when `DEMO_AUTH_ENABLED=true` (local dev).
 
-`POST https://creator-os-gold.vercel.app/api/v1/auth/token` accepts any email + password (≥ 8 chars), auto-provisions users, returns JWT with `"auth_mode": "demo"`.
+| Endpoint | Purpose |
+|---|---|
+| `POST /auth/register` | Create account with hashed password |
+| `POST /auth/token` | Login (validates password hash) |
+| `POST /auth/logout` | Clear HttpOnly session cookie |
+
+**Vercel login:** `daniela@creatoros.demo` / `demo1234` (after `make seed` + migration `0004_user_password_hash`).
+
+JWT is set as an **HttpOnly cookie** on same-origin production; Bearer token remains in the response for local cross-origin dev.
 
 ---
 
@@ -188,7 +227,7 @@ CreatorOS/
 | Domain | Routes |
 |---|---|
 | Health | `GET /health`, `GET /admin/system-status` |
-| Auth | `POST /auth/token` |
+| Auth | `POST /auth/register`, `POST /auth/token`, `POST /auth/logout` |
 | Creator | `POST /creators`, `GET /creators/{id}`, `PATCH /creators/{id}/*` |
 | Trends | `GET /trends/latest`, `POST /trends/run-research` |
 | Content | `POST /content-ideas/generate`, `GET /content-ideas` |

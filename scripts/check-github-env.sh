@@ -3,6 +3,12 @@
 # Usage: ./scripts/check-github-env.sh
 set -euo pipefail
 
+# Portfolio/PR CI runs with in-memory SQLite and mocked deps — no private secrets required.
+if [ "${CI_LITE:-}" = "true" ]; then
+  echo "CI lite mode — skipping private secret validation"
+  exit 0
+fi
+
 missing=0
 
 check_secret() {
