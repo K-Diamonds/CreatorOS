@@ -7,6 +7,50 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      CELERY_BROKER_URL: ${{ secrets.CELERY_BROKER_URL }}
+      CELERY_RESULT_BACKEND: ${{ secrets.CELERY_RESULT_BACKEND }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENCLAW_GATEWAY_TOKEN: ${{ secrets.OPENCLAW_GATEWAY_TOKEN }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      META_CLIENT_SECRET: ${{ secrets.META_CLIENT_SECRET }}
+      META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+      INSTAGRAM_CONFIG_SECRET: ${{ secrets.INSTAGRAM_CONFIG_SECRET }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      PINTEREST_APP_SECRET: ${{ secrets.PINTEREST_APP_SECRET }}
+      ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+      LOG_LEVEL: ${{ vars.LOG_LEVEL }}
+      AUTH_URL: ${{ vars.AUTH_URL }}
+      AUTH_ENABLED: ${{ vars.AUTH_ENABLED }}
+      DEMO_AUTH_ENABLED: ${{ vars.DEMO_AUTH_ENABLED }}
+      ADMIN_USER_IDS: ${{ vars.ADMIN_USER_IDS }}
+      API_RATE_LIMIT_PER_MINUTE: ${{ vars.API_RATE_LIMIT_PER_MINUTE }}
+      CORS_ALLOW_ORIGINS: ${{ vars.CORS_ALLOW_ORIGINS }}
+      CORS_ALLOW_METHODS: ${{ vars.CORS_ALLOW_METHODS }}
+      CORS_ALLOW_HEADERS: ${{ vars.CORS_ALLOW_HEADERS }}
+      CORS_ALLOW_CREDENTIALS: ${{ vars.CORS_ALLOW_CREDENTIALS }}
+      LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+      OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
+      OAUTH_REDIRECT_BASE_URL: ${{ vars.OAUTH_REDIRECT_BASE_URL }}
+      GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+      GOOGLE_AUTH_REDIRECT_URI: ${{ vars.GOOGLE_AUTH_REDIRECT_URI }}
+      GOOGLE_REDIRECT_URI: ${{ vars.GOOGLE_REDIRECT_URI }}
+      META_CLIENT_ID: ${{ vars.META_CLIENT_ID }}
+      META_APP_ID: ${{ vars.META_APP_ID }}
+      META_REDIRECT_URI: ${{ vars.META_REDIRECT_URI }}
+      INSTAGRAM_CONFIG_ID: ${{ vars.INSTAGRAM_CONFIG_ID }}
+      TIKTOK_CLIENT_KEY: ${{ vars.TIKTOK_CLIENT_KEY }}
+      PINTEREST_APP_ID: ${{ vars.PINTEREST_APP_ID }}
+      NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+      NEXT_PUBLIC_CREATOR_USER_ID: ${{ vars.NEXT_PUBLIC_CREATOR_USER_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -14,11 +58,10 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Sync GitHub secrets to Vercel
+        run: python3 scripts/sync-vercel-env-ci.py
+
       - name: Deploy CreatorOS to Vercel production
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           npm i -g vercel@latest
           vercel deploy --prod --yes --no-wait --token "$VERCEL_TOKEN"

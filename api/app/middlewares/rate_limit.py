@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
 from collections import deque
@@ -92,6 +93,12 @@ def build_rate_limit_backend(
             logger.info("rate_limit_backend=redis")
             return backend
         except Exception as exc:
+            if os.environ.get("VERCEL"):
+                logger.warning(
+                    "vercel_redis_unavailable_falling_back_to_memory",
+                    exc_info=exc,
+                )
+                return InMemoryRateLimitBackend(requests_per_minute=requests_per_minute)
             raise RuntimeError(f"REDIS_URL is required but connection failed: {exc}") from exc
 
     if redis_url and is_production_redis_url(redis_url):
